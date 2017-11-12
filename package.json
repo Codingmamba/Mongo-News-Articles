@@ -1,0 +1,24 @@
+{
+  "name": "mongo-news",
+  "version": "1.0.0",
+  "description": "News Articles with news being imported from another new site using mongoDB",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Codingmamba/Mongo-News-Articles.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Codingmamba/Mongo-News-Articles/issues"
+  },
+  "homepage": "https://github.com/Codingmamba/Mongo-News-Articles#readme",
+  "dependencies": {
+    "express": "^4.16.2",
+    "express-handlebars": "^3.0.0",
+    "request": "^2.83.0"
+  }
+}
