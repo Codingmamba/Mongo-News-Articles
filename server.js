@@ -11,25 +11,12 @@ let logger = require("morgan");
 let PORT = 3000;
 let Schema = mongoose.Schema;
 
+let MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
+
 
 // Initialize Express
 let app = express();
 app.use(express.static("public"));
-
-
-// Database configuration
-// Save the URL of our database as well as the name of our collection
-var databaseUrl = "zoo";
-var collections = ["animals"];
-
-// Use mongojs to hook the database to the db variable
-var db = mongojs(databaseUrl, collections);
-
-// This makes sure that any errors are logged if mongodb runs into an issue
-db.on("error", function(error) {
-  console.log("Database Error:", error);
-});
-
 
 // Routes
 // 1. At the root path, send a simple hello world message to the browser
