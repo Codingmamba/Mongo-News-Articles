@@ -1,0 +1,22 @@
+* {
+    font-family: 'Fira Sans', sans-serif;
+    margin-left: 90px;
+    margin-right: 90px;
+ }
+
+ #titles {
+   background: red;
+   color: white;
+   padding: 5px;
+   text-align: center;
+ }
+
+#scrape {
+  margin-left: 50px;
+}
+
+.post {
+  border: 1px solid red;
+  /*margin-left: 90px;
+  margin-right: 90px;*/
+}
