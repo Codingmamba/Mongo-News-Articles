@@ -54,15 +54,17 @@ app.get('/scrape', function(req, res) {
   //       link:link
   //     });
 
-      $("h2.headline").each(function(i, element) {
+      $("div.story-body").each(function(i, element) {
           // Save the text of the h4-tag as "title"
           var title = $(this).text();
           // Find the h4 tag's parent a-tag, and save it's href value as "link"
           var link = $(element).children().attr("href");
           // Make an object with data we scraped for this h4 and push it to the results array
+          var summary = $(this).text();
           results.push({
             title: title,
-            link: link
+            link: link,
+            summary: summary
           });
 
   console.log(results);
