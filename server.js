@@ -22,6 +22,8 @@ let MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines
 // Initialize Express
 let app = express();
 app.use(express.static("public"));
+app.use(bodyParser.urlencoded({ extended: true }));
+//app.use(bodyParser.json());
 
 let db = mongoose.connection;
 
@@ -67,10 +69,21 @@ app.get('/scrape', function(req, res) {
             summary: summary
           });
 
-  console.log(results);
+		 console.log(results);
+		 
+			for (let i = 0; i < results.length; i++) {
+
+				var html;
+			  
+				html += "<h1>" + results[i].title + "</h1>";
+				html += "<a href=" + results[i].link + "</a>";
+				html += "<p>" + results[i].title + "</p>";
+	
+				}	
+					
 });
   });
-  res.send("Scrape Complete");
+  $("#titles").html(html);
 });
 
 
