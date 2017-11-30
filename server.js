@@ -7,129 +7,108 @@ let express = require("express");
 let mongojs = require("mongojs");
 let bodyParser = require("body-parser");
 let logger = require("morgan");
+let axios = require("axios");
 let path = require("path");
-let js = require('./public/assets/cherrio.js');
 
-let Note = require('./models/note.js');
-let Article = require('./models/article.js');
+let PORT = process.env.PORT || 3005;
 
-var PORT = process.env.PORT || 3005;
-let Schema = mongoose.Schema;
-
-let MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
+// Connect to the Mongo DB
+mongoose.Promise = Promise;
+mongoose.connect("mongodb://localhost/news", {
+  useMongoClient: true
+});
 
 
 // Initialize Express
 let app = express();
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: true }));
-//app.use(bodyParser.json());
 
-let db = mongoose.connection;
+// Morgan logger for logging requests
+app.use(logger("dev"));
 
-db.on('error', function (err) {
-console.log('Mongoose Error: ', err);
-});
-
-db.once('open', function () {
-console.log('Mongoose connection successful.');
-});
-
+let db = require("./models");
 
 // Routes
 app.get('/', function(req, res) {
   res.send(index.html);
 });
 
-
 app.get('/scrape', function(req, res) {
-	request('https://www.nytimes.com/section/us?action=click&pgtype=Homepage&region=TopBar&module=HPMiniNav&contentCollection=U.S.&WT.nav=page', function (error, response, html) {
-  let $ = cheerio.load(html);
-  let results = [];
-  // $('p.title').each(function(i, element){
+	axios.get('https://www.nytimes.com/section/us?action=click&pgtype=Homepage&region=TopBar&module=HPMiniNav&contentCollection=U.S.&WT.nav=page').then(function(response) {
+  const $ = cheerio.load(response.data);
 
-  //     let title = $(this).text();
-  //     let link = $(element).children().attr('href');
+  $("div.story-body").each(function(i, element) {
+	let results = {};
 
-  //     result.push({
-  //       title:title,
-  //       link:link
-  //     });
+	results.title = $(this).text();
 
-      $("div.story-body").each(function(i, element) {
-          // Save the text of the h4-tag as "title"
-          var title = $(this).text();
-          // Find the h4 tag's parent a-tag, and save it's href value as "link"
-          var link = $(element).children().attr("href");
-          // Make an object with data we scraped for this h4 and push it to the results array
-          var summary = $(this).text();
-          results.push({
-            title: title,
-            link: link,
-            summary: summary
-          });
-
-		 console.log(results);
-		 
-			for (let i = 0; i < results.length; i++) {
-
-				var html;
-			  
-				html += "<h1>" + results[i].title + "</h1>";
-				html += "<a href=" + results[i].link + "</a>";
-				html += "<p>" + results[i].title + "</p>";
+	results.link = $(element).children().attr("href");
 	
-				}	
-					
-});
-  });
-  $("#titles").html(html);
-});
+	results.summary = $(this).text();
 
-
-app.get('/articles', function(req, res){
-	Article.find({}, function(err, doc){
-		if (err){
-			console.log(err);
-		} else {
-			res.json(doc);
-		}
-	});
-});
-
-
-app.get('/articles/:id', function(req, res){
-	Article.findOne({'_id': req.params.id})
-	.populate('note')
-	.exec(function(err, doc){
-		if (err){
-			console.log(err);
-		} else {
-			res.json(doc);
-		}
-	});
-});
-
-
-app.post('/articles/:id', function(req, res){
-	let newNote = new Note(req.body);
-
-	newNote.save(function(err, doc){
-		if(err){
-			console.log(err);
-		} else {
-			Article.findOneAndUpdate({'_id': req.params.id}, {'note':doc._id})
-			.exec(function(err, doc){
-				if (err){
-					console.log(err);
-				} else {
-					res.send(doc);
-				}
+		db.Article
+			.create(results)
+			.then(function(dbArticle) {
+				  
+			res.send("Scrape Complete");
+				})
+			.catch(function(err) {
+				  
+				res.json(err);
 			});
-
-		}
+		});
+	  });
 	});
-});
+
+// Route for getting all Articles from the db
+app.get("/articles", function(req, res) {
+	// Grabs every document in the Articles collection
+	db.Article
+	  .find({})
+	  .then(function(dbArticle) {
+	
+		res.json(dbArticle);
+	  })
+	  .catch(function(err) {
+		
+		res.json(err);
+	  });
+  });
+  // Route for grabbing a specific Article by id, populate it with it's note
+  app.get("/articles/:id", function(req, res) {
+	
+	db.Article
+	  .findOne({ _id: req.params.id })
+
+	  .populate("note")
+	  .then(function(dbArticle) {
+
+		res.json(dbArticle);
+	  })
+	  .catch(function(err) {
+		// If an error occurred, send it to the client
+		res.json(err);
+	  });
+  });
+  // Route for saving/updating an Article's associated Note
+  app.post("/articles/:id", function(req, res) {
+	// Create a new note and pass the req.body to the entry
+	db.Note
+	  .create(req.body)
+	  .then(function(dbNote) {
+		
+		return db.Article.findOneAndUpdate({ _id: req.params.id }, { note: dbNote._id }, { new: true });
+	  })
+	  .then(function(dbArticle) {
+		// If we were able to successfully update an Article, send it back to the client
+		res.json(dbArticle);
+	  })
+	  .catch(function(err) {
+		// If an error occurred, send it to the client
+		res.json(err);
+	  });
+  });
 
 app.listen(PORT , function() {
   console.log('App running on port:'+ PORT);
