@@ -12,11 +12,15 @@ let path = require("path");
 
 let PORT = process.env.PORT || 3005;
 
+let mods = require("./models");
+
 // Connect to the Mongo DB
 mongoose.Promise = Promise;
 mongoose.connect("mongodb://localhost/news", {
   useMongoClient: true
 });
+
+let Schema = mongoose.Schema;
 
 
 // Initialize Express
@@ -27,39 +31,41 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Morgan logger for logging requests
 app.use(logger("dev"));
 
-let db = require("./models");
+
+let db = mongoose.connection; 
+
 
 // Routes
 app.get('/', function(req, res) {
   res.send(index.html);
 });
 
+
 app.get('/scrape', function(req, res) {
-	axios.get('https://www.nytimes.com/section/us?action=click&pgtype=Homepage&region=TopBar&module=HPMiniNav&contentCollection=U.S.&WT.nav=page').then(function(response) {
-  const $ = cheerio.load(response.data);
+	axios.get('https://www.nytimes.com/section/us?action=click&pgtype=Homepage&region=TopBar&module=HPMiniNav&contentCollection=U.S.&WT.nav=page').then(function(response) { 
+		const $ = cheerio.load(response.data); 
+	 
+		$("div.story-body").each(function(i, element) { 
+		let results = {}; 
 
-  $("div.story-body").each(function(i, element) {
-	let results = {};
+	results.title = $(this).text(); 	
+	results.link = $(element).children().attr("href"); 
+  results.summary = $(this).text(); 
 
-	results.title = $(this).text();
-
-	results.link = $(element).children().attr("href");
-	
-	results.summary = $(this).text();
-
-		db.Article
-			.create(results)
-			.then(function(dbArticle) {
-				  
-			res.send("Scrape Complete");
-				})
-			.catch(function(err) {
-				  
-				res.json(err);
-			});
+	 //db.Article 
+		 //.create(results) 
+		 //.then(function(dbArticle) { 
+					
+		 res.send("Scrape Complete"); 
+			// }) 
+		//  .catch(function(err) { 
+					
+		// 	 res.json(err); 
+		//  });
 		});
-	  });
+		res.send("Scrape Complete"); 
 	});
+});
 
 // Route for getting all Articles from the db
 app.get("/articles", function(req, res) {
