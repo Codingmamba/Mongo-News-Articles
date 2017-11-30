@@ -1,4 +1,3 @@
-// MONGODB_URI: mongodb://heroku_32w8s3fm:38jivtq4aprt9164436t9ae9rk@ds259305.mlab.com:59305/heroku_32w8s3fm
 
 let cheerio = require("cheerio");
 let request = require("request");
